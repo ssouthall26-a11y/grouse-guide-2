@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Maine Grouse Field Guide</title>
+  <meta name="description" content="A clean, interactive guide to ruffed grouse habitat, seasons, and on-the-ground reads in Maine." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --card: #0f1117;
+      --muted: #8a93a7;
+      --text: #e6e9f2;
+      --accent: #7c9cff;
+      --accent-2: #a3ffd6;
+      --ring: rgba(124,156,255,.45);
+      --maxw: 1100px;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+    }
+    @media (prefers-color-scheme: light) {
+      :root { --bg:#f6f8ff; --card:#fff; --muted:#5a6175; --text:#182033; --accent:#3459ff; --accent-2:#00c48c; --ring:rgba(52,89,255,.28); --shadow:0 10px 30px rgba(20,26,60,.08); }
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";color:var(--text);background:radial-gradient(1200px 600px at 80% -10%,rgba(124,156,255,.12),transparent 60%),radial-gradient(900px 500px at 0% 20%,rgba(163,255,214,.10),transparent 60%),var(--bg);line-height:1.6}
+    .container{width:min(100%,var(--maxw));margin:0 auto;padding:0 20px}
+    .section-title{font-size:22px;margin:18px 0}
+    .grid{display:grid;gap:18px;grid-template-columns:repeat(3,1fr)}
+    @media (max-width:980px){.grid{grid-template-columns:1fr 1fr}}
+    @media (max-width:640px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid color-mix(in srgb, var(--text), transparent 92%);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .habitat{padding:16px}
+    .habitat .shot{width:100%;height:180px;border-radius:12px;border:1px solid color-mix(in srgb, var(--text), transparent 88%);object-fit:cover;display:block;background:linear-gradient(135deg,color-mix(in srgb,var(--accent),transparent 65%),color-mix(in srgb,var(--accent-2),transparent 65%))}
+    footer{padding:28px 0 60px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section id="habitats">
+      <h2 class="section-title">Habitats</h2>
+      <div class="grid" id="habitatGrid"></div>
+    </section>
+  </main>
+  <footer class="container">© <span id="year"></span> Grouse Guide • Maine</footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Use just the base filename; code will try multiple paths/exts
+    const HABITATS = [
+      { title:'Young Aspen/Poplar Regen (5–20 yrs)', blurb:'Broom-handle stems, high stem density, nearby softwood for winter. Classic flush cover.', how:['Work cross-wind along the edge.','Pause at blowdowns and berry runs.','Watch for tracks/droppings on skid roads.'], file:'aspen', alt:'Young aspen regeneration with dense stems in Maine' },
+      { title:'Alder Runs & Wet Bottoms', blurb:'Bugs, shade, and soft soils. Good on warm days and early season.', how:['Trace the green seams parallel to water.','Hit intersections of alder with hardwood regen.','Expect tight-holding birds; shots are quick.'], file:'alder', alt:'Alder thicket along a wet drainage' },
+      { title:'Spruce/Fir Islands Next to Hardwoods', blurb:'Thermal cover and roost trees near feed (birch/aspen buds). Late-season money.', how:['Hunt edges during midday sun.','Check leeward sides when windy.','Slow your dog; let them sort the cone.'], file:'spruce', alt:'Spruce and fir mix in winter cover' },
+    ];
+
+    const grid = document.getElementById('habitatGrid');
+
+    function render(cards){
+      grid.innerHTML = cards.map(h => `
+        <article class="card habitat">
+          <img class="shot" data-file="${h.file}" alt="${h.alt || ''}" loading="lazy" />
+          <h3>${h.title}</h3>
+          <p>${h.blurb}</p>
+          <details><summary>How to work it</summary><ul>${h.how.map(x=>`<li>${x}</li>`).join('')}</ul></details>
+        </article>
+      `).join('');
+      // After rendering, resolve image sources
+      document.querySelectorAll('img.shot').forEach(img => setImgSrc(img, img.dataset.file));
+    }
+
+    // Try multiple likely paths & extensions, including the GitHub colon quirk
+    function setImgSrc(img, base){
+      const variants = [
+        `images/${base}.jpg`,
+        `images/${base}.jpeg`,
+        `images/images:${base}.jpg`,      // e.g. images:aspen.jpg inside /images
+        `images/images:${base}.jpeg`,
+        `images/images/${base}.jpg`,      // nested folder case
+        `images/images/${base}.jpeg`
+      ];
+      let i = 0;
+      const tryNext = () => {
+        if (i >= variants.length){ img.alt = (img.alt||'') + ' (image not found)'; return; }
+        const candidate = variants[i++];
+        const probe = new Image();
+        probe.onload = () => { img.src = candidate; };
+        probe.onerror = tryNext;
+        probe.src = candidate;
+      };
+      tryNext();
+    }
+
+    render(HABITATS);
+  </script>
+</body>
+</html>
